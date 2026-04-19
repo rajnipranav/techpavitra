@@ -1290,7 +1290,12 @@
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify(data)
     }).then(function(r){
-      return r.json().then(function(j){ return { ok: r.ok, json: j }; });
+      var status_code = r.status;
+      return r.text().then(function(t){
+        var parsed;
+        try { parsed = JSON.parse(t); } catch(e) { parsed = null; }
+        return { ok: r.ok, status: status_code, json: parsed };
+      });
     }).then(function(res){
       if (res.ok && res.json && res.json.ok) {
         status.className = 'enquiry-status is-ok';
@@ -1303,15 +1308,15 @@
         turnstileToken = '';
         submitLabel.textContent = 'Sent';
       } else {
-        var msg = (res.json && res.json.error) || 'Something went wrong. Please try again.';
+        var msg = (res.json && res.json.error) || ('Server error (' + res.status + '). Please try again or email us directly.');
         status.className = 'enquiry-status is-err';
         status.textContent = msg;
         submit.disabled = false;
         submitLabel.textContent = 'Send enquiry';
       }
-    }).catch(function(){
+    }).catch(function(err){
       status.className = 'enquiry-status is-err';
-      status.textContent = 'Network error. Please try again in a moment.';
+      status.textContent = 'Could not reach the server. Please check your connection and try again, or email us directly.';
       submit.disabled = false;
       submitLabel.textContent = 'Send enquiry';
     });
