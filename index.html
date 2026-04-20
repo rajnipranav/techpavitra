@@ -919,6 +919,28 @@
 
   .hero { min-height: clamp(520px, 78vh, 780px); }
 
+
+  .hero-glows { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .glow-1 { position: absolute; background: radial-gradient(circle, rgba(14, 90, 106, 0.4) 0%, transparent 70%); width: 60vw; height: 60vw; top: -20vw; right: -10vw; filter: blur(100px); opacity: 0.4; }
+  .glow-2 { position: absolute; background: radial-gradient(circle, rgba(176, 139, 69, 0.15) 0%, transparent 70%); width: 50vw; height: 50vw; bottom: -15vw; left: -5vw; filter: blur(100px); opacity: 0.3; }
+
+  .eyebrow {
+    display: inline-flex !important; align-items: center !important; gap: 10px !important;
+    padding: 6px 16px !important; border-radius: 30px !important; font-size: 13px !important;
+    font-family: "Inter", sans-serif !important; font-weight: 600 !important; letter-spacing: 0.15em !important;
+    background: rgba(230, 209, 160, 0.08) !important; border: 1px solid rgba(230, 209, 160, 0.25) !important;
+    color: var(--brass-glow) !important; margin-bottom: 24px !important; backdrop-filter: blur(4px) !important;
+    text-transform: uppercase !important; position: relative !important; z-index: 5 !important;
+  }
+  .eyebrow::before {
+    content: "" !important; width: 8px !important; height: 8px !important; border-radius: 50% !important;
+    background: var(--brass-glow) !important; display: inline-block !important;
+    box-shadow: 0 0 10px var(--brass-glow) !important; animation: pulseDot 1.5s infinite !important;
+    margin-right: 0 !important;
+  }
+  .eyebrow::after { content: none !important; }
+  @keyframes pulseDot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.85); } }
+
 </style>
 </head>
 <body>
@@ -1179,6 +1201,7 @@
 
 <!-- HERO -->
 <header class="hero">
+    <div class="hero-glows"><div class="glow-1"></div><div class="glow-2"></div></div>
     <canvas id="heroParticles" aria-hidden="true"></canvas>
     <div class="wrap">
 
@@ -1345,114 +1368,165 @@
 
 <script>
 (function(){
-  var canvas = document.getElementById('heroParticles');
-  if (!canvas || !canvas.getContext) return;
-  var ctx = canvas.getContext('2d');
+  var cv = document.getElementById('heroParticles');
+  if (!cv || !cv.getContext) return;
+  var ctx = cv.getContext('2d');
+  
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var w = 0, h = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
-  var particles = [];
+  var W = 0, H = 0, dpr = Math.min(window.devicePixelRatio || 1, 2);
   var rafId = null;
+  var t = 0;
+  var mouse = { x: -1000, y: -1000 };
+  var targetMouse = { x: -1000, y: -1000 };
 
-  function sizeCanvas(){
-    var parent = canvas.parentElement;
-    var rect = parent.getBoundingClientRect();
-    w = rect.width; h = rect.height;
-    canvas.width  = Math.floor(w * dpr);
-    canvas.height = Math.floor(h * dpr);
-    canvas.style.width  = w + 'px';
-    canvas.style.height = h + 'px';
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  // Particles State
+  var particles = [];
+  
+  function resize() {
+      var parent = cv.parentElement;
+      var rect = parent.getBoundingClientRect();
+      W = rect.width; H = rect.height;
+      cv.width = Math.floor(W * dpr);
+      cv.height = Math.floor(H * dpr);
+      cv.style.width = W + 'px';
+      cv.style.height = H + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      seedParticles();
   }
 
-  function seedParticles(){
-    var density = w < 720 ? 0.00014 : 0.00022;
-    var count = Math.max(32, Math.min(110, Math.floor(w * h * density)));
-    particles = [];
-    for (var i = 0; i < count; i++) {
-      particles.push({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        vx: (Math.random() - 0.5) * 0.28,
-        vy: (Math.random() - 0.5) * 0.28,
-        r: 1.1 + Math.random() * 1.6
-      });
-    }
-  }
-
-  function draw(animate){
-    ctx.clearRect(0, 0, w, h);
-
-    // dots
-    for (var i = 0; i < particles.length; i++) {
-      var p = particles[i];
-      if (animate) {
-        p.x += p.vx; p.y += p.vy;
-        if (p.x < 0 || p.x > w) { p.vx *= -1; p.x = Math.max(0, Math.min(w, p.x)); }
-        if (p.y < 0 || p.y > h) { p.vy *= -1; p.y = Math.max(0, Math.min(h, p.y)); }
+  function seedParticles() {
+      var density = W < 768 ? 0.0001 : 0.00015;
+      var count = Math.max(20, Math.min(80, Math.floor(W * H * density)));
+      particles = [];
+      for (var i = 0; i < count; i++) {
+          particles.push({
+              x: Math.random() * W,
+              y: Math.random() * H,
+              vx: (Math.random() - 0.5) * 0.25,
+              vy: (Math.random() - 0.5) * 0.25,
+              r: 0.8 + Math.random() * 1.5
+          });
       }
-      // soft glow halo
-      var grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
-      grad.addColorStop(0, 'rgba(230, 209, 160, 0.55)');
-      grad.addColorStop(1, 'rgba(230, 209, 160, 0)');
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // crisp core
-      ctx.beginPath();
-      ctx.fillStyle = 'rgba(240, 220, 175, 0.85)';
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // connecting lines
-    var threshold = w < 720 ? 130 : 170;
-    for (var a = 0; a < particles.length; a++) {
-      for (var b = a + 1; b < particles.length; b++) {
-        var dx = particles[a].x - particles[b].x;
-        var dy = particles[a].y - particles[b].y;
-        var d2 = dx*dx + dy*dy;
-        var t2 = threshold * threshold;
-        if (d2 < t2) {
-          var d = Math.sqrt(d2);
-          var alpha = (1 - d / threshold) * 0.42;
-          ctx.strokeStyle = 'rgba(230, 209, 160, ' + alpha.toFixed(3) + ')';
-          ctx.lineWidth = 0.9;
-          ctx.beginPath();
-          ctx.moveTo(particles[a].x, particles[a].y);
-          ctx.lineTo(particles[b].x, particles[b].y);
-          ctx.stroke();
-        }
-      }
-    }
-
-    if (animate) rafId = requestAnimationFrame(function(){ draw(true); });
   }
 
-  function start(){
-    sizeCanvas();
-    seedParticles();
-    if (rafId) cancelAnimationFrame(rafId);
-    draw(!reduced);
-  }
-
-  var resizeTimer;
   window.addEventListener('resize', function(){
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(start, 160);
+      clearTimeout(window._rsz);
+      window._rsz = setTimeout(resize, 160);
+  });
+  
+  window.addEventListener('mousemove', function(e) {
+      var rect = cv.getBoundingClientRect();
+      targetMouse.x = e.clientX - rect.left;
+      targetMouse.y = e.clientY - rect.top;
   });
 
-  document.addEventListener('visibilitychange', function(){
-    if (document.hidden && rafId) { cancelAnimationFrame(rafId); rafId = null; }
-    else if (!document.hidden && !reduced && !rafId) { draw(true); }
-  });
+  // Radar Targets
+  var pings = [
+      { a: 0.8,  r: 0.55, state: 0, id: "TGT-ALPHA", alt: "12,400" },
+      { a: 2.15, r: 0.72, state: 0, id: "TGT-BETA",  alt: "8,200" },
+      { a: 4.3,  r: 0.38, state: 0, id: "TGT-GAMMA", alt: "24,000" },
+      { a: 5.1,  r: 0.65, state: 0, id: "TGT-DELTA", alt: "19,500" },
+      { a: 3.5,  r: 0.85, state: 0, id: "TGT-ECHO",  alt: "3,100" }
+  ];
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
+  function draw() {
+      mouse.x += (targetMouse.x - mouse.x) * 0.04;
+      mouse.y += (targetMouse.y - mouse.y) * 0.04;
+
+      ctx.clearRect(0, 0, W, H);
+
+      // --- 1. PARTICLE BACKGROUND ---
+      var threshold = W < 768 ? 100 : 150;
+      for (var i = 0; i < particles.length; i++) {
+          var p = particles[i];
+          p.x += p.vx; p.y += p.vy;
+          if (p.x < 0 || p.x > W) p.vx *= -1;
+          if (p.y < 0 || p.y > H) p.vy *= -1;
+
+          // Connections
+          for (var j = i + 1; j < particles.length; j++) {
+              var p2 = particles[j];
+              var dx = p.x - p2.x; var dy = p.y - p2.y;
+              var d2 = dx*dx + dy*dy;
+              if (d2 < threshold * threshold) {
+                  var dist = Math.sqrt(d2);
+                  var alpha = (1 - dist / threshold) * 0.15;
+                  ctx.strokeStyle = 'rgba(230, 209, 160, ' + alpha + ')';
+                  ctx.lineWidth = 0.5;
+                  ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+              }
+          }
+
+          // Node
+          ctx.fillStyle = 'rgba(230, 209, 160, 0.25)';
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fill();
+      }
+
+      // --- 2. RADAR OVERLAY ---
+      var isDesktop = W > 1024;
+      var cx = isDesktop ? W * 0.75 : W * 0.5;
+      var cy = isDesktop ? H * 0.5 : (W < 768 ? H * 0.7 : H * 0.6);
+      var rx = cx + (mouse.x - W/2) * 0.02;
+      var ry = cy + (mouse.y - H/2) * 0.02;
+      var R = Math.min(W, H) * (isDesktop ? 0.42 : 0.6);
+
+      ctx.save();
+      // Grid
+      ctx.fillStyle = 'rgba(230, 209, 160, 0.04)';
+      var gridS = 40;
+      for(var x = (rx % gridS); x < W; x += gridS) {
+          for(var y = (ry % gridS); y < H; y += gridS) {
+              if (Math.hypot(x - rx, y - ry) < R * 2) {
+                  ctx.beginPath(); ctx.arc(x, y, 0.8, 0, Math.PI * 2); ctx.fill();
+              }
+          }
+      }
+      // Rings
+      ctx.lineWidth = 1;
+      for(var i = 1; i <= 5; i++) {
+          ctx.beginPath(); ctx.arc(rx, ry, R * (i/5), 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(230, 209, 160, ' + (0.03 + (1-i/5)*0.06) + ')';
+          ctx.stroke();
+      }
+      // Sweep
+      var sweep = t * 1.8;
+      for(var j = 0; j < 60; j++) {
+          ctx.beginPath(); ctx.moveTo(rx, ry);
+          ctx.arc(rx, ry, R, sweep - (j/60)*1.2, sweep - ((j-1)/60)*1.2);
+          ctx.fillStyle = 'rgba(230, 209, 160, ' + (Math.pow(1-j/60, 3)*0.2) + ')';
+          ctx.fill();
+      }
+      // Lead Line
+      ctx.beginPath(); ctx.moveTo(rx, ry);
+      ctx.lineTo(rx + Math.cos(sweep)*R, ry + Math.sin(sweep)*R);
+      ctx.strokeStyle = 'rgba(240, 220, 175, 0.8)'; ctx.lineWidth = 2; ctx.stroke();
+
+      // Targets
+      pings.forEach(function(p) {
+          var px = rx + Math.cos(p.a) * R * p.r;
+          var py = ry + Math.sin(p.a) * R * p.r;
+          var diff = (sweep % (Math.PI*2)) - (p.a % (Math.PI*2));
+          if(diff < 0) diff += Math.PI*2;
+          if(diff < 0.1 && diff > 0) p.state = 1.0;
+          if(p.state > 0) {
+              p.state -= 0.012;
+              var a = p.state;
+              ctx.beginPath(); ctx.arc(px, py, 3, 0, Math.PI*2);
+              ctx.fillStyle = 'rgba(255,255,255,'+a+')'; ctx.fill();
+              if (a > 0.2) {
+                  ctx.font = '10px "Inter", sans-serif'; ctx.fillStyle = 'rgba(230,209,160,'+a+')';
+                  ctx.fillText(p.id, px + 10, py - 10);
+              }
+          }
+      });
+      ctx.restore();
+
+      t += 0.016;
+      if (!reduced) rafId = requestAnimationFrame(draw);
   }
+
+  resize();
+  if (!reduced) rafId = requestAnimationFrame(draw); else draw();
 })();
 </script>
 
