@@ -44,7 +44,7 @@
     font-size: 16px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-  }
+    padding-top: 0;}
   img { max-width: 100%; height: auto; display: block; }
   a { color: inherit; text-decoration: none; }
 
@@ -278,7 +278,7 @@
     line-height: 1.65;
     max-width: 64ch;
     margin: 0 0 clamp(28px, 3vw, 36px);
-  }
+    padding-top: 0;}
   .domains-list {
     list-style: none;
     padding: 0; margin: 0;
@@ -471,10 +471,10 @@
      SITE-WIDE NAVIGATION
      ==================================================================== */
   .site-nav {
-    position: sticky;
+    position: fixed;
     transition: background .3s ease, border-color .3s ease;
     top: 0;
-    left: 0; right: 0;
+    left: 0; right: 0; width: 100%;
     z-index: 60;
     background: transparent;
     border-bottom: 1px solid rgba(255,255,255,0.15);
@@ -1075,7 +1075,7 @@
     content: '';
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(255,255,255,0.055) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(255,255,255,0.08) 1px, transparent 1px);
     background-size: 30px 30px;
     z-index: 0;
     pointer-events: none;
