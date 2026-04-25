@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://techpavitra.com/sitemap.xml
+Sitemap: https://techadyant.com/sitemap.xml

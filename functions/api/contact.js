@@ -10,12 +10,12 @@
  *   RESEND_API_KEY        Secret. Get from https://resend.com/api-keys
  *   TURNSTILE_SECRET_KEY  Secret. Get from Cloudflare → Turnstile → your site → Settings
  *   FROM_EMAIL            Plain text. Must be on a domain you've verified on Resend.
- *                         Until techpavitra.com is verified, use: "TechPavitra <onboarding@resend.dev>"
- *   INBOX_GENERAL         Plain text. e.g. info@techpavitra.com
- *   INBOX_DEFENCE         Plain text. e.g. defence@techpavitra.com
- *   INBOX_PARTNERSHIPS    Plain text. e.g. partnerships@techpavitra.com
- *   INBOX_CONSULTANCY     Plain text. e.g. consultancy@techpavitra.com
- *   INBOX_COMPLIANCE      Plain text. e.g. compliance@techpavitra.com
+ *                         Until techadyant.com is verified, use: "TechAdyant <onboarding@resend.dev>"
+ *   INBOX_GENERAL         Plain text. e.g. info@techadyant.com
+ *   INBOX_DEFENCE         Plain text. e.g. defence@techadyant.com
+ *   INBOX_PARTNERSHIPS    Plain text. e.g. partnerships@techadyant.com
+ *   INBOX_CONSULTANCY     Plain text. e.g. consultancy@techadyant.com
+ *   INBOX_COMPLIANCE      Plain text. e.g. compliance@techadyant.com
  *
  * Bound to the same project as the static site, so it lives at /api/contact
  * with no extra routing config.
@@ -142,7 +142,7 @@ export async function onRequestPost({ request, env }) {
   const html = `
     <div style="font-family:-apple-system,Segoe UI,Inter,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#1a2a30;">
       <h2 style="margin:0 0 4px;color:#083b46;">New enquiry — ${escapeHtml(desk.label)}</h2>
-      <p style="margin:0 0 24px;color:#5b6e75;font-size:14px;">Submitted via techpavitra.com contact form</p>
+      <p style="margin:0 0 24px;color:#5b6e75;font-size:14px;">Submitted via techadyant.com contact form</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;">
         <tr><td style="padding:8px 0;color:#5b6e75;width:120px;">Name</td><td style="padding:8px 0;font-weight:600;">${escapeHtml(name)}</td></tr>
         <tr><td style="padding:8px 0;color:#5b6e75;">Email</td><td style="padding:8px 0;"><a href="mailto:${escapeHtml(email)}" style="color:#083b46;">${escapeHtml(email)}</a></td></tr>
@@ -157,7 +157,7 @@ export async function onRequestPost({ request, env }) {
 
   const text = [
     `New enquiry — ${desk.label}`,
-    `Submitted via techpavitra.com contact form`,
+    `Submitted via techadyant.com contact form`,
     ``,
     `Name:         ${name}`,
     `Email:        ${email}`,
